@@ -132,7 +132,7 @@ class Registrations(object):
         if indx in range(0, len(self.regs)):
             return self.regs[indx]
 
-    return False
+        return False
 
     def get_create_reg(self, knam, kval):
         r = self.get_reg_by_value(knam, kval)
