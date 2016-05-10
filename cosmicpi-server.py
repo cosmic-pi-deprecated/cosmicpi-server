@@ -159,30 +159,30 @@ class Event(object):
 
 		# These are the UDP packets containing json strings we are expecting
 
-		self.HTU = { "Tmh":"0.0","Hum":"0.0" }
-		self.BMP = { "Tmb":"0.0","Prs":"0.0","Alb":"0.0" }
-		self.VIB = { "Vax":"0","Vcn":"0" }
-		self.MAG = { "Mgx":"0.0","Mgy":"0.0","Mgz":"0.0" }
+		self.temperature = { "temperature":"0.0","humidity":"0.0" }
+		self.barometer = { "temperature":"0.0","pressure":"0.0","altitude":"0.0" }
+		self.vibration = { "direction":"0","count":"0" }
+		self.magnetometer = { "x":"0.0","y":"0.0","z":"0.0" }
 		self.MOG = { "Mox":"0.0","Moy":"0.0","Moz":"0.0" }
-		self.ACL = { "Acx":"0.0","Acy":"0.0","Acz":"0.0" }
+		self.accelerometer = { "x":"0.0","y":"0.0","z":"0.0" }
 		self.AOL = { "Aox":"0.0","Aoy":"0.0","Aoz":"0.0" }
-		self.LOC = { "Lat":"0.0","Lon":"0.0","Alt":"0.0" }
-		self.TIM = { "Upt":"0","Frq":"0","Sec":"0" }
-		self.STS = { "Qsz":"0","Mis":"0","Ter":"0","Htu":"0","Bmp":"0","Acl":"0","Mag":"0","Gps":"0" }
-		self.EVT = { "Evt":"0","Frq":"0","Tks":"0","Etm":"0.0","Adc":"[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]" }
-		self.DAT = { "Dat":"s" }
+		self.location = { "latitude":"0.0","longitude":"0.0","altitude":"0.0" }
+		self.timing = { "uptime":"0","counter_frequency":"0","time_string":"0" }
+		self.status = { "queue_size":"0","missed_events":"0","buffer_error":"0","temp_status":"0","baro_status":"0","accel_status":"0","mag_status":"0","gps_status":"0" }
+		self.event = { "event_number":"0","counter_frequency":"0","ticks":"0","timestamp":"0.0","adc":"[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]" }
+		self.date = { "date":"s" }
 
 		# Add ons
 
-		self.DAT = { "Dat":"s" }		# Date
-		self.SQN = { "Sqn":"0" }		# Sequence number
+		self.date = { "date":"s" }		# Date
+		self.sequence = { "number":"0" }		# Sequence number
 		self.PAT = { "Pat":"s","Ntf":"0" }	# Pushover application token
 
 		# Now build the main dictionary with one entry for each json string we will process
 
-		self.recd = {	"HTU":self.HTU, "BMP":self.BMP, "VIB":self.VIB, "MAG":self.MAG, "MOG":self.MOG,
-				"ACL":self.ACL, "AOL":self.AOL, "LOC":self.LOC, "TIM":self.TIM, "STS":self.STS,
-				"EVT":self.EVT, "DAT":self.DAT, "SQN":self.SQN, "PAT":self.PAT }
+		self.recd = {	"temperature":self.temperature, "barometer":self.barometer, "vibration":self.vibration, "magnetometer":self.magnetometer, "MOG":self.MOG,
+				"accelerometer":self.accelerometer, "AOL":self.AOL, "location":self.location, "timing":self.timing, "status":self.status,
+				"event":self.event, "date":self.date, "sequence":self.sequence, "PAT":self.PAT }
 
 		self.newpat = False
 		self.newsqn = False
@@ -200,7 +200,7 @@ class Event(object):
 			if kys[0] == "PAT":
 				self.newpat = True
 
-			if kys[0] == "SQN":
+			if kys[0] == "sequence":
 				self.newsqn = True
 
 		except Exception, e:
@@ -209,37 +209,37 @@ class Event(object):
 	# Here we just return dictionaries
 
 	def get_vib(self):
-		return self.recd["VIB"]
+		return self.recd["vibration"]
 
 	def get_tim(self):
-		return self.recd["TIM"]
+		return self.recd["timing"]
 
 	def get_loc(self):
-		return self.recd["LOC"]
+		return self.recd["location"]
 
 	def get_sts(self):
-		return self.recd["STS"]
+		return self.recd["status"]
 
 	def get_bmp(self):
-		return self.recd["BMP"]
+		return self.recd["barometer"]
 
 	def get_acl(self):
-		return self.recd["ACL"]
+		return self.recd["accelerometer"]
 
 	def get_mag(self):
-		return self.recd["MAG"]
+		return self.recd["magnetometer"]
 
 	def get_htu(self):
-		return self.recd["HTU"]
+		return self.recd["temperature"]
 
 	def get_evt(self):
-		return self.recd["EVT"]
+		return self.recd["event"]
 
 	def get_dat(self):
-		return self.recd["DAT"]
+		return self.recd["date"]
 
 	def get_sqn(self):
-		return self.recd["SQN"]
+		return self.recd["sequence"]
 
 	def get_pat(self):
 		return self.recd["PAT"]
@@ -321,18 +321,19 @@ def main():
 					#print "Parse:%s" % nstr[i]
 					evt.parse(nstr[i])
 
-				if nstr[0].find("EVT") != -1:
+				if nstr[0].find("event") != -1:
 					newsqn = True
 					evd = evt.get_evt()
 					tim = evt.get_tim()
 					dat = evt.get_dat()
 					print
-					print "Cosmic Event..: Evt:%s Frq:%s Tks:%s Etm:%s" % (evd["Evt"],evd["Frq"],evd["Tks"],evd["Etm"])
-					print "Adc[[Ch0][Ch1]: Adc:%s" % (str(evd["Adc"]))
-					print "Time..........: Upt:%s Sec:%s" % (tim["Upt"],tim["Sec"])
-					print "Date..........: Dat:%s" % (dat["Dat"])
+					print "Cosmic Event..: event_number:%s counter_frequency:%s ticks:%s timestamp:%s" \
+						  % (evd["event_number"],evd["counter_frequency"],evd["ticks"],evd["timestamp"])
+					print "adc[[Ch0][Ch1]: adc:%s" % (str(evd["adc"]))
+					print "Time..........: uptime:%s time_string:%s" % (tim["uptime"],tim["time_string"])
+					print "Date..........: date:%s" % (dat["date"])
 
-				elif nstr[0].find("VIB") != -1:
+				elif nstr[0].find("vibration") != -1:
 					newsqn = True
 					mag = evt.get_mag()
 					vib = evt.get_vib()
@@ -340,21 +341,21 @@ def main():
 					acl = evt.get_acl()
 					sqn = evt.get_sqn()
 					print
-					print "Vibration.....: Vax:%s Vcn:%s Sqn:%d" % (vib["Vax"],vib["Vcn"],sqn["Sqn"])
-					print "Time..........: Sec:%s" % (tim["Sec"])
-					print "Accelarometer.: Acx:%s Acy:%s Acz:%s" % (acl["Acx"],acl["Acy"],acl["Acz"])
-					print "Magnatometer..: Mgx:%s Mgy:%s Mgz:%s" % (mag["Mgx"],mag["Mgy"],mag["Mgz"])
+					print "Vibration.....: direction:%s count:%s sequence_number:%d" % (vib["direction"],vib["count"],sqn["number"])
+					print "Time..........: time_string:%s" % (tim["time_string"])
+					print "Accelarometer.: x:%s y:%s z:%s" % (acl["x"],acl["y"],acl["z"])
+					print "Magnetometer..: x:%s y:%s z:%s" % (mag["x"],mag["y"],mag["z"])
 
-				elif nstr[0].find("HTU") != -1:
+				elif nstr[0].find("temperature") != -1:
 					newsqn = True
 					tim = evt.get_tim()
 					bmp = evt.get_bmp()
 					htu = evt.get_htu()
 					loc = evt.get_loc()
 					print
-					print "Barometer.....: Tmb:%s Prs:%s Alb:%s" % (bmp["Tmb"],bmp["Prs"],bmp["Alb"])
-					print "Humidity......: Tmh:%s Hum:%s Alt:%s" % (htu["Tmh"],htu["Hum"],loc["Alt"])
-					print "Time..........: Sec:%s\n" % (tim["Sec"])
+					print "Barometer.....: temperature:%s pressure:%s altitude:%s" % (bmp["temperature"],bmp["pressure"],bmp["altitude"])
+					print "Humidity......: temperature:%s humidity:%s altitude:%s" % (htu["temperature"],htu["humidity"],loc["altitude"])
+					print "Time..........: time_string:%s\n" % (tim["time_string"])
 
 				elif nstr[0].find("PAT") != -1:
 					pat = evt.get_pat()
@@ -372,27 +373,27 @@ def main():
 					r["Ntf"] = pat["Ntf"]
 					reg.set_reg(r)
 
-				elif nstr[0].find("STS") != -1:
+				elif nstr[0].find("status") != -1:
 					sts = evt.get_sts()
 					r = reg.get_create_reg("Ipa",str(recv[1]))
-					r["Htu"] = sts["Htu"]
-					r["Bmp"] = sts["Bmp"]
-					r["Acl"] = sts["Acl"]
-					r["Mag"] = sts["Mag"]
-					r["Gps"] = sts["Gps"]
+					r["temp_status"] = sts["temp_status"]
+					r["baro_status"] = sts["baro_status"]
+					r["accel_status"] = sts["accel_status"]
+					r["mag_status"] = sts["mag_status"]
+					r["gps_status"] = sts["gps_status"]
 					reg.set_reg(r)
 
 					msg = ""
-					if int(r["Htu"]) == 0:
-						msg = msg + "Htu down: "
-					if int(r["Bmp"]) == 0:
-						msg = msg + "Bmp down: "
-					if int(r["Acl"]) == 0:
-						msg = msg + "Acl down: "
-					if int(r["Mag"]) == 0:
-						msg = msg + "Mag down: "
-					if int(r["Gps"]) == 0:
-						msg = msg + "Gps down: "
+					if int(r["temp_status"]) == 0:
+						msg = msg + "temp_status down: "
+					if int(r["baro_status"]) == 0:
+						msg = msg + "baro_status down: "
+					if int(r["accel_status"]) == 0:
+						msg = msg + "accel_status down: "
+					if int(r["mag_status"]) == 0:
+						msg = msg + "mag_status down: "
+					if int(r["gps_status"]) == 0:
+						msg = msg + "gps_status down: "
 
 					if len(msg) > 0:
 						if badhard == False:
@@ -412,14 +413,14 @@ def main():
 					sqn = evt.get_sqn()
 					r = reg.get_create_reg("Ipa",str(recv[1]))
 					j = int(r["Sqn"])
-					i = int(sqn["Sqn"])
+					i = int(sqn["number"])
 					if i != j+1 and j != 0:
 						msg = "Sequence error: %s %d-%d" % (str(recv[1],i,j))
 						print msg
 						if r["Ntf"]:
 							nfs.send_ntf(pat["Pat"],msg)
 
-					r["Sqn"] = i
+					r["number"] = i
 					reg.set_reg(r)
 
 				if logflg:
