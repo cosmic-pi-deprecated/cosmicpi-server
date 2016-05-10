@@ -13,7 +13,7 @@ import fcntl
 from optparse import OptionParser
 
 from event import Event
-from socket import Socket_io
+from sock import Socket_io
 from keyboard import KeyBoard
 from notifications import Notifications
 from registrations import Registrations
