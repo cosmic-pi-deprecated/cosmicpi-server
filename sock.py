@@ -1,13 +1,13 @@
 import select
 
-import socket
+import sock
 
 
 class Socket_io(object):
     def __init__(self, ipport):
         try:
-            self.sik = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.sik.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            self.sik = sock.sock(sock.AF_INET, sock.SOCK_DGRAM)
+            self.sik.setsockopt(sock.SOL_SOCKET, sock.SO_REUSEPORT, 1)
             self.sik.setblocking(0)
             self.sik.bind(("", ipport))
 
