@@ -54,33 +54,30 @@ class MessageHandler(object):
         self.thread.join()
 
     def on_message(self, ch, method, properties, body):
-        print("received: %r" % body)
-
         if len(body):
             event = Event(json.loads(body))
 
             if hasattr(event, 'event'):
                 self.newsqn = True
                 print 'Cosmic event received'
-                print "Event.........: %s" % event.event
-                print "ADC...........: %s" % event.adc
-                print "Timing........: %s" % event.timing
-                print "Date..........: %s" % event.date
+                print "Event.........: %s" % json.dumps(event.event)
+                print "Timing........: %s" % json.dumps(event.timing)
+                print "Date..........: %s" % json.dumps(event.date)
 
             elif hasattr(event, 'vibration'):
                 self.newsqn = True
                 print 'Vibration event received'
-                print "Vibration.....: %s" % event.vibration
-                print "Accelerometer.: %s" % event.accelerometer
-                print "Magnetometer..: %s" % event.magnetometer
-                print "Timing........: %s" % event.timing
+                print "Vibration.....: %s" % json.dumps(event.vibration)
+                print "Accelerometer.: %s" % json.dumps(event.accelerometer)
+                print "Magnetometer..: %s" % json.dumps(event.magnetometer)
+                print "Timing........: %s" % json.dumps(event.timing)
 
             elif hasattr(event, 'temperature'):
                 self.newsqn = True
                 print 'Weather event received'
-                print "Thermometer...: %s" % event.temperature
-                print "Barometer.....: %s" % event.barometer
-                print "Timing........: %s" % event.timing
+                print "Thermometer...: %s" % json.dumps(event.temperature)
+                print "Barometer.....: %s" % json.dumps(event.barometer)
+                print "Timing........: %s" % json.dumps(event.timing)
 
             elif hasattr(event, 'PAT'):
                 pat = event.PAT
