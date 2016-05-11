@@ -1,3 +1,4 @@
+import json
 import os
 import threading
 import pika
@@ -24,7 +25,6 @@ class MessageHandler(object):
         self.thread = threading.Thread(target=self.run, args=())
         self.thread.daemon = True
 
-        self.evt = Event()
         self.nfs = Notifications()
         self.reg = Registrations()
         self.logflg = logflg
@@ -55,59 +55,35 @@ class MessageHandler(object):
 
     def on_message(self, ch, method, properties, body):
         print("received: %r" % body)
-        recv = body
 
-        if len(recv[0]):
+        if len(body):
+            event = Event(json.loads(body))
 
-            print "FromIP:%s" % (str(recv[1]))
+            if hasattr(event, 'event'):
+                self.newsqn = True
+                print 'Cosmic event received'
+                print "Event.........: %s" % event.event
+                print "ADC...........: %s" % event.adc
+                print "Timing........: %s" % event.timing
+                print "Date..........: %s" % event.date
 
-            nstr = recv[0].split('*')
-            for i in range(0, len(nstr)):
-                nstr[i] = nstr[i].replace('\n', '')
-                # print "Parse:%s" % nstr[i]
-                self.evt.parse(nstr[i])
+            elif hasattr(event, 'vibration'):
+                self.newsqn = True
+                print 'Vibration event received'
+                print "Vibration.....: %s" % event.vibration
+                print "Accelerometer.: %s" % event.accelerometer
+                print "Magnetometer..: %s" % event.magnetometer
+                print "Timing........: %s" % event.timing
 
-            if nstr[0].find("event") != -1:
-                newsqn = True
-                evd = self.evt.get_evt()
-                tim = self.evt.get_tim()
-                dat = self.evt.get_dat()
-                print
-                print "Cosmic Event..: event_number:%s counter_frequency:%s ticks:%s timestamp:%s" \
-                      % (evd["event_number"], evd["counter_frequency"], evd["ticks"], evd["timestamp"])
-                print "adc[[Ch0][Ch1]: adc:%s" % (str(evd["adc"]))
-                print "Time..........: uptime:%s time_string:%s" % (tim["uptime"], tim["time_string"])
-                print "Date..........: date:%s" % (dat["date"])
+            elif hasattr(event, 'temperature'):
+                self.newsqn = True
+                print 'Weather event received'
+                print "Thermometer...: %s" % event.temperature
+                print "Barometer.....: %s" % event.barometer
+                print "Timing........: %s" % event.timing
 
-            elif nstr[0].find("vibration") != -1:
-                newsqn = True
-                mag = self.evt.get_mag()
-                vib = self.evt.get_vib()
-                tim = self.evt.get_tim()
-                acl = self.evt.get_acl()
-                sqn = self.evt.get_sqn()
-                print
-                print "Vibration.....: direction:%s count:%s sequence_number:%d" % (
-                    vib["direction"], vib["count"], sqn["number"])
-                print "Time..........: time_string:%s" % (tim["time_string"])
-                print "Accelarometer.: x:%s y:%s z:%s" % (acl["x"], acl["y"], acl["z"])
-                print "Magnetometer..: x:%s y:%s z:%s" % (mag["x"], mag["y"], mag["z"])
-
-            elif nstr[0].find("temperature") != -1:
-                newsqn = True
-                tim = self.evt.get_tim()
-                bmp = self.evt.get_bmp()
-                htu = self.evt.get_htu()
-                loc = self.evt.get_loc()
-                print
-                print "Barometer.....: temperature:%s pressure:%s altitude:%s" % (
-                    bmp["temperature"], bmp["pressure"], bmp["altitude"])
-                print "Humidity......: temperature:%s humidity:%s altitude:%s" % (
-                    htu["temperature"], htu["humidity"], loc["altitude"])
-                print "Time..........: time_string:%s\n" % (tim["time_string"])
-
-            elif nstr[0].find("PAT") != -1:
-                pat = self.evt.get_pat()
+            elif hasattr(event, 'PAT'):
+                pat = event.PAT
                 print
                 print "Notification..: Pat:%s Ntf:%s" % (pat["Pat"], pat["Ntf"])
                 if pat["Ntf"] == True:
@@ -117,14 +93,14 @@ class MessageHandler(object):
 
                 self.nfs.send_ntf(pat["Pat"], msg)
 
-                r = self.reg.get_create_reg("Ipa", str(recv[1]))
+                r = self.reg.get_create_reg("Ipa", pat)
                 r["Pat"] = pat["Pat"]
                 r["Ntf"] = pat["Ntf"]
                 self.reg.set_reg(r)
 
-            elif nstr[0].find("status") != -1:
-                sts = self.evt.get_sts()
-                r = self.reg.get_create_reg("Ipa", str(recv[1]))
+            elif hasattr(event, 'status'):
+                sts = event.status
+                r = self.reg.get_create_reg("Ipa", sts)
                 r["temp_status"] = sts["temp_status"]
                 r["baro_status"] = sts["baro_status"]
                 r["accel_status"] = sts["accel_status"]
@@ -148,34 +124,34 @@ class MessageHandler(object):
                     if self.badhard == False:
                         self.badhard = True
                         if r["Ntf"]:
-                            self.nfs.send_ntf(self.evt.get_pat()["Pat"], msg)
-                        print "Hardware error:%s %s" % (str(recv[1], msg))
+                            self.nfs.send_ntf(event.PAT["Pat"], msg)
+                        print "Hardware error:%s %s" % (sts, msg)
                 else:
                     if self.badhard == True:
                         self.badhard = False
                         msg = "Hardware OK again"
                         if r["Ntf"]:
-                            self.nfs.send_ntf(self.evt.get_pat()["Pat"], msg)
-                        print "%s:%s" % (msg, str(recv[1]))
+                            self.nfs.send_ntf(event.PAT["Pat"], msg)
+                        print "%s:%s" % (msg, sts)
             if self.newsqn:
                 self.newsqn = False
-                sqn = self.evt.get_sqn()
-                r = self.reg.get_create_reg("Ipa", str(recv[1]))
+                sqn = event.sequence
+                r = self.reg.get_create_reg("Ipa", sqn)
                 j = int(r["Sqn"])
                 i = int(sqn["number"])
                 if i != j + 1 and j != 0:
-                    msg = "Sequence error: %s %d-%d" % (str(recv[1], i, j))
+                    msg = "Sequence error: %s %d-%d" % (sqn, i, j)
                     print msg
                     if r["Ntf"]:
-                        self.nfs.send_ntf(self.evt.get_pat()["Pat"], msg)
+                        self.nfs.send_ntf(event.PAT["Pat"], msg)
 
                 r["number"] = i
                 self.reg.set_reg(r)
 
-            if self.logflg:
-                line = "%s - %s" % (str(recv[0]), str(recv[1]))
-                self.log.write(line)
-                self.log.write("\n\n")
+            # if self.logflg:
+            #     line = "%s - %s" % (str(recv[0]), str(recv[1]))
+            #     self.log.write(line)
+            #     self.log.write("\n\n")
 
     def close(self):
         self.connection.close()
