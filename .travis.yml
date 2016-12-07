@@ -1,0 +1,21 @@
+language: python
+python: 3.5
+
+env:
+- TOXENV=py35
+- TOXENV=py27
+
+install: pip install -U tox
+
+script: tox -e ${TOXENV}
+
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: jirikuncar
+  on:
+    tags: true
+    repo: CosmicPi/cosmicpi_server
+    condition: "$TOXENV == py27"
+  password:
+    secure: RXlDlR3C5SDjljz1h5zD0YuypROofkU34eSg3V7ABTTSxivLl0LBRdCgDAdwuDGlC5LMcSnsW8g/0+DiP9EKcjUmB0XnRJjzIL2IU281JMWQXKKg0jHwzRVbrx0SZvP24ujLdW2Sp/EYIoT8PQRt/GA92/AkqK25KP6EQtDSi1mIqG4b50+4cdi5Jb2F9y9D8r+Qs4JKIqjWL2OlExQ1YR1/CWJZNCU9S/1AYmz0/on+ShcK5J4K6X721YI28z2zeaskDmbrSV9u9I9ZahUYTi0uHUmWxhPdAYkbgoa9+SsvOWxtGWPyoZaJTjnpwpFp30zSqTCa0QHp2gMO+3YoLmATVxnq1G7tCgP0gwJeNOKScC5/Th4XNGCnbJqc3duY0NUzYwkJUSS6KmMX43JQiXUzvkG3YYU/FGlXQcZTaHC1mPgeua+hs1zou6Yc6XwhVA6AIAkDP9JaHXnz3oVlb5HNiopkiHD/ZrsbO1taXo4ATZfn/5tPl3lj3HILiGm4Z3f2lJpR1fsuFhBIgGWsNT8+Z1L1OWx2sV4Rsi0CIcZF6GDRq2c3TkGrVf0irLCFkek5OMZ5lt9dukwJLMWapOHla+zgsxzfjZCMEg+y7+AOAOItbN2KXBUK7ZS2NfcnhIIIuFi7NQiEZhYzoKVKu14z8V0Olhk6vqAS8HYUGdk=
