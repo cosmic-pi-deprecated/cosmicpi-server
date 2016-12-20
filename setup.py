@@ -11,6 +11,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'Click>=6.0',
+    'SQLAlchemy>=1.1',
     'pika>=0.10.0',
 ]
 
